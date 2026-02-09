@@ -1,10 +1,10 @@
 let pixelContainer;
-
+let selectedColor = 'red';
 
 document.addEventListener('DOMContentLoaded', function () {
   pixelContainer = document.getElementById("pixel-container")
 
-  generatePixelGrid(5, 10);
+  generatePixelGrid(25, 10);
 
 }
 )
@@ -20,6 +20,10 @@ function generatePixelGrid(rows, columns) {
     for (let j = 0; j < columns; j++) {
       const pixelBox = document.createElement("div");
       pixelBox.className = "pixel-box";
+
+      pixelBox.addEventListener('click', function () {
+        pixelBox.style.backgroundColor = selectedColor;
+      })
       row.append(pixelBox);
     }
   }
