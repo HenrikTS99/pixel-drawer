@@ -1,5 +1,5 @@
 let pixelContainer;
-let selectedColor = 'red';
+let selectedColor = '#ff0000';
 let mouseDown = false;
 
 // top bar
@@ -16,6 +16,7 @@ let pixelBorderToggle;
 document.addEventListener('DOMContentLoaded', () => {
   pixelContainer = document.getElementById("pixel-container");
   colorInput = document.getElementById('color-picker');
+  colorInput.value = selectedColor;
   rowsInput = document.getElementById('rows');
   columnsInput = document.getElementById('columns');
   rowsValue = document.getElementById('rows-value');
