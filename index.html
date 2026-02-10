@@ -8,7 +8,22 @@
   <title>Pixel Drawer</title>
 </head>
 <body>
- <div id="pixel-container">
+<main>
+  <div id="top-bar">
+    <label for="color-picker">Select Color:</label>
+    <input type="color" id="color-picker" value="#000000">
+
+    <label for="rows">Select Rows:
+      <input type="range" id="rows" min="10" max="200" value="50">
+      <output id="rows-value">50</output>
+    </label>
+        
+    <label for="columns">Select Columns:</label>
+    <input type="range" id="columns" min="10" max="200" value="50">
+    <output id="columns-value">50</output>
+  </div>
+  <div id="pixel-container">
   </div> 
+</main>
 </body>
 </html>
