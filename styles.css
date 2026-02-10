@@ -5,6 +5,7 @@
   align-items:center;
   height: 100vh;
   width: 100vw;
+  border: 4px solid black;
 }
 
 .row {
@@ -14,5 +15,6 @@
 .pixel-box { 
   height: 10px;
   width: 10px;
-  border: 1px solid black;
+  box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,0.1);
 }

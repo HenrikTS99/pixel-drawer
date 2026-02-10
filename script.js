@@ -8,6 +8,9 @@ let rowsInput;
 let columnsInput;
 let rowsValue;
 let columnsValue;
+let pixelSizeInput;
+let pixelSizeValue;
+let pixelBorderToggle;
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,7 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
   columnsInput = document.getElementById('columns');
   rowsValue = document.getElementById('rows-value');
   columnsValue = document.getElementById('columns-value');
-  createEventListeners()
+  pixelSizeInput = document.getElementById('pixel-size');
+  pixelSizeValue = document.getElementById('pixel-size-value');
+  pixelBorderToggle = document.getElementById('pixel-border-toggle');
+  createEventListeners();
   generatePixelGrid(rowsInput.value, columnsInput.value);
 }
 )
@@ -42,6 +48,13 @@ function createEventListeners() {
   // size sliders
   rowsInput.oninput = handleSlider;
   columnsInput.oninput = handleSlider;
+  pixelSizeInput.oninput = (e) => {
+    changePixelsSize(e.target.value);
+    pixelSizeValue.innerHTML = e.target.value;
+  }
+
+  // toggle pixel border
+  pixelBorderToggle.addEventListener('change', (e) => togglePixelBorders(e.target.checked));
 }
 
 function handleSlider(e) {
@@ -51,6 +64,26 @@ function handleSlider(e) {
     rowsValue.innerHTML = e.target.value;
   };
   generatePixelGrid(rowsInput.value, columnsInput.value);
+}
+
+function changePixelsSize(size) {
+  const pixelDivs = Array.from(document.getElementsByClassName('pixel-box'));
+  pixelDivs.forEach(pixel => {
+    pixel.style.width = size + 'px';
+    pixel.style.height = size + 'px';
+  });
+}
+
+function togglePixelBorders(boolValue) {
+  const pixelDivs = Array.from(document.getElementsByClassName('pixel-box'));
+  console.log(boolValue);
+  pixelDivs.forEach(pixel => {
+    if (boolValue) {
+      pixel.style.border = '1px solid rgba(0,0,0,0.1)';
+    } else if (!boolValue) {
+      pixel.style.border = 'none';
+    }
+  });
 }
 
 function handlePaint(e) {
