@@ -122,6 +122,13 @@ function generatePixelGrid(rows, columns) {
   currColumns = columns;
 }
 
+function resetCanvas() {
+  const pixels = Array.from(document.getElementsByClassName('pixel-box'))
+  pixels.forEach(pixel => {
+    pixel.style.backgroundColor = "";
+  });
+}
+
 function updatePixelGrid(newRows, newColumns) {
   // the amounts to add or remove
   let rowsDifference = newRows - currRows;
