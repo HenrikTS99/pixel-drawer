@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   createEventListeners();
-  generatePixelGrid(rowsInput.value, columnsInput.value);
+  generatePixelGrid(Number(rowsInput.value), Number(columnsInput.value));
 });
 
 function createEventListeners() {
@@ -79,7 +79,7 @@ function createEventListeners() {
   }
 
   brushSizeInput.oninput = (e) => {
-    brushSize = e.target.value;
+    brushSize = parseInt(e.target.value);
     brushSizeValue.innerHTML = brushSize;
   }
   // toggle pixel border
@@ -124,13 +124,17 @@ function handlePaint(e) {
   if (!e.target.classList.contains("pixel-box")) return;
   let [row, col] = getPixelFromEvent(e)
   let rowsDivs = Array.from(document.getElementsByClassName('row'));
-  for (let r = 0; r < brushSize; r++) {
-    if (row + r >= currRows || row + r < 0) continue;
-    let columnPixels = Array.from(rowsDivs[row + r].children);
-    for (let c = 0; c < brushSize; c++) {
-      if (col + c >= currColumns || col + c < 0) continue;
 
-      let pixel = columnPixels[col + c];
+  let offset = Math.floor((brushSize - 1) / 2);
+
+  for (let r = row - offset; r < row - offset + brushSize; r++) {
+    if (r >= currRows || r < 0) continue;
+    let columnPixels = Array.from(rowsDivs[r].children);
+
+    for (let c = col - offset; c < col - offset + brushSize; c++) {
+      if (c >= currColumns || c < 0) continue;
+
+      let pixel = columnPixels[c];
       if (e.buttons === 2) {
         pixel.style.backgroundColor = '';
       } else {
