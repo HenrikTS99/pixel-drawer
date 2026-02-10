@@ -1,6 +1,9 @@
 let pixelContainer;
 let selectedColor = '#ff0000';
 let mouseDown = false;
+let currRows;
+let currColumns;
+let currPixelSize;
 
 // top bar
 let colorInput;
@@ -20,14 +23,17 @@ document.addEventListener('DOMContentLoaded', () => {
   rowsInput = document.getElementById('rows');
   columnsInput = document.getElementById('columns');
   rowsValue = document.getElementById('rows-value');
+  rowsValue.innerHTML = rowsInput.value;
   columnsValue = document.getElementById('columns-value');
+  columnsValue.innerHTML = columnsInput.value;
   pixelSizeInput = document.getElementById('pixel-size');
+  currPixelSize = pixelSizeInput.value;
   pixelSizeValue = document.getElementById('pixel-size-value');
+  pixelSizeValue.innerHTML = pixelSizeInput.value;
   pixelBorderToggle = document.getElementById('pixel-border-toggle');
   createEventListeners();
   generatePixelGrid(rowsInput.value, columnsInput.value);
-}
-)
+});
 
 function createEventListeners() {
   document.addEventListener('mouseup', () => mouseDown = false);
@@ -64,7 +70,7 @@ function handleSlider(e) {
   } else if (e.target === rowsInput) {
     rowsValue.innerHTML = e.target.value;
   };
-  generatePixelGrid(rowsInput.value, columnsInput.value);
+  updatePixelGrid(rowsInput.value, columnsInput.value);
 }
 
 function changePixelsSize(size) {
@@ -73,6 +79,7 @@ function changePixelsSize(size) {
     pixel.style.width = size + 'px';
     pixel.style.height = size + 'px';
   });
+  currPixelSize = size;
 }
 
 function togglePixelBorders(boolValue) {
@@ -106,11 +113,72 @@ function generatePixelGrid(rows, columns) {
     row.className = "row";
     pixelContainer.append(row);
 
+    let pixelBox = createPixel();
     for (let j = 0; j < columns; j++) {
-      const pixelBox = document.createElement("div");
-      pixelBox.className = "pixel-box";
-
-      row.append(pixelBox);
+      row.append(pixelBox.cloneNode());
     }
   }
+  currRows = rows;
+  currColumns = columns;
+}
+
+function updatePixelGrid(newRows, newColumns) {
+  // the amounts to add or remove
+  let rowsDifference = newRows - currRows;
+  let columnsDifference = newColumns - currColumns;
+
+  updateRows(rowsDifference);
+  currRows = newRows;
+  updateColumns(columnsDifference)
+  currColumns = newColumns;
+}
+
+function updateRows(rowsDifference) {
+  // add 1 row to top and bottom, and fill the colums with the necessary pixels
+  while (rowsDifference > 0) {
+    const row = document.createElement("div");
+    row.className = "row";
+    let pixelBox = createPixel();
+    for (let i = 0; i < currColumns; i++) {
+      row.append(pixelBox.cloneNode());
+    }
+    pixelContainer.append(row);
+    pixelContainer.prepend(row.cloneNode(true)); // deep clone row
+    rowsDifference -= 2;
+  }
+  // remove 1 row top and bottom, until no more to remove
+  while (rowsDifference < 0) {
+    pixelContainer.lastChild.remove();
+    pixelContainer.firstChild.remove();
+    rowsDifference += 2;
+  }
+}
+
+function updateColumns(columnsDifference) {
+  const rowsDivs = Array.from(document.getElementsByClassName('row'));
+  let pixelBox = createPixel();
+  // add 1 pixel on each side until no more columns to add
+  while (columnsDifference > 0) {
+    rowsDivs.forEach(row => {
+      row.append(pixelBox.cloneNode());
+      row.prepend(pixelBox.cloneNode());
+    });
+    columnsDifference -= 2;
+  }
+  // remove 1 pixel on each side until no more columns to remove
+  while (columnsDifference < 0) {
+    rowsDivs.forEach(row => {
+      row.lastChild.remove();
+      row.firstChild.remove();
+    });
+    columnsDifference += 2;
+  }
+}
+
+function createPixel() {
+  const pixelBox = document.createElement("div");
+  pixelBox.className = "pixel-box";
+  pixelBox.style.width = currPixelSize + 'px';
+  pixelBox.style.height = currPixelSize + 'px';
+  return pixelBox;
 }
