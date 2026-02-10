@@ -18,22 +18,36 @@ let pixelSizeInput;
 let pixelSizeValue;
 let pixelBorderToggle;
 
+let brushSizeInput;
+let brushSize
+let brushSizeValue;
 
 document.addEventListener('DOMContentLoaded', () => {
   pixelContainer = document.getElementById("pixel-container");
+
   colorInput = document.getElementById('color-picker');
   colorInput.value = selectedColor;
+
   rowsInput = document.getElementById('rows');
-  columnsInput = document.getElementById('columns');
   rowsValue = document.getElementById('rows-value');
   rowsValue.innerHTML = rowsInput.value;
+
+  columnsInput = document.getElementById('columns');
   columnsValue = document.getElementById('columns-value');
   columnsValue.innerHTML = columnsInput.value;
+
   pixelSizeInput = document.getElementById('pixel-size');
   currPixelSize = pixelSizeInput.value;
   pixelSizeValue = document.getElementById('pixel-size-value');
-  pixelSizeValue.innerHTML = pixelSizeInput.value;
+  pixelSizeValue.innerHTML = currPixelSize;
+
+  brushSizeInput = document.getElementById('brush-size');
+  brushSize = parseInt(brushSizeInput.value);
+  brushSizeValue = document.getElementById('brush-size-value');
+
   pixelBorderToggle = document.getElementById('pixel-border-toggle');
+
+
   createEventListeners();
   generatePixelGrid(rowsInput.value, columnsInput.value);
 });
@@ -58,13 +72,19 @@ function createEventListeners() {
   // size sliders
   rowsInput.oninput = handleSlider;
   columnsInput.oninput = handleSlider;
+
   pixelSizeInput.oninput = (e) => {
     changePixelsSize(e.target.value);
     pixelSizeValue.innerHTML = e.target.value;
   }
 
+  brushSizeInput.oninput = (e) => {
+    brushSize = e.target.value;
+    brushSizeValue.innerHTML = brushSize;
+  }
   // toggle pixel border
   pixelBorderToggle.addEventListener('change', (e) => togglePixelBorders(e.target.checked));
+
 }
 
 function handleSlider(e) {
@@ -92,13 +112,31 @@ function togglePixelBorders(show) {
   });
 }
 
+function getPixelFromEvent(e) {
+  let row = Number(e.target.dataset.row);
+  let col = Number(e.target.dataset.col);
+  return [row, col];
+}
+
+
 function handlePaint(e) {
   if (!mouseDown) return;
   if (!e.target.classList.contains("pixel-box")) return;
-  if (e.buttons === 2) {
-    e.target.style.backgroundColor = '';
-  } else {
-    e.target.style.backgroundColor = selectedColor;
+  let [row, col] = getPixelFromEvent(e)
+  let rowsDivs = Array.from(document.getElementsByClassName('row'));
+  for (let r = 0; r < brushSize; r++) {
+    if (row + r >= currRows || row + r < 0) continue;
+    let columnPixels = Array.from(rowsDivs[row + r].children);
+    for (let c = 0; c < brushSize; c++) {
+      if (col + c >= currColumns || col + c < 0) continue;
+
+      let pixel = columnPixels[col + c];
+      if (e.buttons === 2) {
+        pixel.style.backgroundColor = '';
+      } else {
+        pixel.style.backgroundColor = selectedColor;
+      }
+    }
   }
 }
 
@@ -106,16 +144,20 @@ function generatePixelGrid(rows, columns) {
   // remove previous cells
   pixelContainer.replaceChildren();
 
-  for (let i = 0; i < rows; i++) {
-    pixels[i] = []
+  for (let r = 0; r < rows; r++) {
+    pixels[r] = []
     const row = document.createElement("div");
     row.className = "row";
     pixelContainer.append(row);
 
     let pixelBox = createPixel();
-    for (let j = 0; j < columns; j++) {
-      row.append(pixelBox.cloneNode());
-      pixels[i][j] = pixelBox;
+    for (let c = 0; c < columns; c++) {
+      let pixel = pixelBox.cloneNode();
+      pixel.dataset.row = r;
+      pixel.dataset.col = c;
+      row.append(pixel);
+
+      pixels[r][c] = pixelBox;
     }
   }
   currRows = rows;
@@ -192,7 +234,10 @@ function updatePixelsArray() {
     newPixels[r] = [];
     const columnPixels = Array.from(rowsDivs[r].children);
     for (let c = 0; c < columnPixels.length; c++) {
-      newPixels[r][c] = columnPixels[c]
+      let pixel = columnPixels[c];
+      pixel.dataset.row = r;
+      pixel.dataset.col = c;
+      newPixels[r][c] = pixel;
     }
   }
   pixels = newPixels;
