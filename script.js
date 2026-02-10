@@ -5,6 +5,9 @@ let currRows;
 let currColumns;
 let currPixelSize;
 
+// 2d array of pixels
+let pixels = [];
+
 // top bar
 let colorInput;
 let rowsInput;
@@ -104,6 +107,7 @@ function generatePixelGrid(rows, columns) {
   pixelContainer.replaceChildren();
 
   for (let i = 0; i < rows; i++) {
+    pixels[i] = []
     const row = document.createElement("div");
     row.className = "row";
     pixelContainer.append(row);
@@ -111,6 +115,7 @@ function generatePixelGrid(rows, columns) {
     let pixelBox = createPixel();
     for (let j = 0; j < columns; j++) {
       row.append(pixelBox.cloneNode());
+      pixels[i][j] = pixelBox;
     }
   }
   currRows = rows;
@@ -133,6 +138,8 @@ function updatePixelGrid(newRows, newColumns) {
   currRows = newRows;
   updateColumns(columnsDifference)
   currColumns = newColumns;
+  // update pixels array to represent the new pixel grid
+  updatePixelsArray();
 }
 
 function updateRows(rowsDifference) {
@@ -175,6 +182,20 @@ function updateColumns(columnsDifference) {
     });
     columnsDifference += 2;
   }
+}
+
+// due to shifting of pixel grid, pixels array has to be updated to represent the new pixel grid
+function updatePixelsArray() {
+  const rowsDivs = Array.from(document.getElementsByClassName('row'));
+  let newPixels = [];
+  for (let r = 0; r < rowsDivs.length; r++) {
+    newPixels[r] = [];
+    const columnPixels = Array.from(rowsDivs[r].children);
+    for (let c = 0; c < columnPixels.length; c++) {
+      newPixels[r][c] = columnPixels[c]
+    }
+  }
+  pixels = newPixels;
 }
 
 function createPixel() {
