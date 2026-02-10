@@ -27,7 +27,11 @@ function createEventListeners() {
 function handlePaint(e) {
   if (!mouseDown) return;
   if (!e.target.classList.contains("pixel-box")) return;
-  e.target.style.backgroundColor = selectedColor;
+  if (e.buttons === 2) {
+    e.target.style.backgroundColor = '';
+  } else {
+    e.target.style.backgroundColor = selectedColor;
+  }
 }
 
 function generatePixelGrid(rows, columns) {
