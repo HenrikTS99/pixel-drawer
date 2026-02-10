@@ -82,15 +82,10 @@ function changePixelsSize(size) {
   currPixelSize = size;
 }
 
-function togglePixelBorders(boolValue) {
+function togglePixelBorders(show) {
   const pixelDivs = Array.from(document.getElementsByClassName('pixel-box'));
-  console.log(boolValue);
   pixelDivs.forEach(pixel => {
-    if (boolValue) {
-      pixel.style.border = '1px solid rgba(0,0,0,0.1)';
-    } else if (!boolValue) {
-      pixel.style.border = 'none';
-    }
+    pixel.style.borderColor = show ? 'rgba(0,0,0,0.1)' : 'transparent';
   });
 }
 
