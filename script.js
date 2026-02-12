@@ -1,283 +1,307 @@
-let pixelContainer;
-let selectedColor = '#ff0000';
-let mouseDown = false;
-let currRows;
-let currColumns;
-let currPixelSize;
 
-// 2d array of pixels
-let pixels = [];
+const PixelDrawer = {
+  state: {
+    selectedColor: 'ff0000',
+    mouseDown: false,
+    rows: 16,
+    columns: 16,
+    pixelSize: 10,
+    brushSize: 1,
+    pixels: [],
+  },
+  elements: {
+    pixelContainer: null,
+    colorInput: null,
 
-// top bar
-let colorInput;
-let rowsInput;
-let columnsInput;
-let rowsValue;
-let columnsValue;
-let pixelSizeInput;
-let pixelSizeValue;
-let pixelBorderToggle;
+    rowsInput: null,
+    rowsValue: null,
+    columnsInput: null,
+    columnsValue: null,
 
-let brushSizeInput;
-let brushSize
-let brushSizeValue;
+    pixelSizeInput: null,
+    pixelSizeValue: null,
+    pixelBorderToggle: null,
 
-document.addEventListener('DOMContentLoaded', () => {
-  pixelContainer = document.getElementById("pixel-container");
+    brushSizeInput: null,
+    brushSize: null,
+    brushSizeValue: null,
 
-  colorInput = document.getElementById('color-picker');
-  colorInput.value = selectedColor;
+    resetButton: null,
+  },
 
-  rowsInput = document.getElementById('rows');
-  rowsValue = document.getElementById('rows-value');
-  rowsValue.innerHTML = rowsInput.value;
+  init() {
+    // Get DOM elements and store them
+    this.elements.pixelContainer = document.getElementById("pixel-container");
 
-  columnsInput = document.getElementById('columns');
-  columnsValue = document.getElementById('columns-value');
-  columnsValue.innerHTML = columnsInput.value;
+    this.elements.colorInput = document.getElementById('color-picker');
 
-  pixelSizeInput = document.getElementById('pixel-size');
-  currPixelSize = pixelSizeInput.value;
-  pixelSizeValue = document.getElementById('pixel-size-value');
-  pixelSizeValue.innerHTML = currPixelSize;
+    this.elements.rowsInput = document.getElementById('rows');
+    this.elements.rowsValue = document.getElementById('rows-value');
 
-  brushSizeInput = document.getElementById('brush-size');
-  brushSize = parseInt(brushSizeInput.value);
-  brushSizeValue = document.getElementById('brush-size-value');
+    this.elements.columnsInput = document.getElementById('columns');
+    this.elements.columnsValue = document.getElementById('columns-value');
 
-  pixelBorderToggle = document.getElementById('pixel-border-toggle');
+    this.elements.pixelSizeInput = document.getElementById('pixel-size');
+    this.elements.pixelSizeValue = document.getElementById('pixel-size-value');
 
-  createEventListeners();
-  generatePixelGrid(Number(rowsInput.value), Number(columnsInput.value));
-});
+    this.elements.brushSizeInput = document.getElementById('brush-size');
+    this.elements.brushSizeValue = document.getElementById('brush-size-value');
 
-function createEventListeners() {
-  document.addEventListener('mouseup', () => mouseDown = false);
-  document.addEventListener('mousedown', () => mouseDown = true);
+    this.elements.pixelBorderToggle = document.getElementById('pixel-border-toggle');
+    this.elements.resetButton = document.getElementById('reset-button');
 
-  pixelContainer.addEventListener('mousedown', (e) => {
-    mouseDown = true;
-    handlePaint(e);
-  });
+    // Set initial display values
+    this.elements.rowsValue.innerHTML = this.elements.rowsInput.value;
+    this.elements.columnsValue.innerHTML = this.elements.columnsInput.value;
+    this.elements.pixelSizeValue.innerHTML = this.state.pixelSize;
 
-  pixelContainer.addEventListener('mousemove', handlePaint);
-  pixelContainer.addEventListener('contextmenu', e => e.preventDefault()); // prevent right-click menu
+    // Initialize state based on DOM values
+    this.state.rows = Number(this.elements.rowsInput.value)
+    this.state.columns = Number(this.elements.columnsInput.value)
+    this.state.pixelSize = Number(this.elements.pixelSizeInput.value);
+    this.state.brushSize = Number(this.elements.brushSizeInput.value);
+    this.state.selectedColor = this.elements.colorInput.value;
 
-  // color picker
-  colorInput.addEventListener('input', (e) => {
-    selectedColor = e.target.value;
-  })
+    this.createEventListeners();
+    this.generatePixelGrid();
+  },
 
-  // size sliders
-  rowsInput.oninput = handleSlider;
-  columnsInput.oninput = handleSlider;
+  createEventListeners() {
+    document.addEventListener('mouseup', () => this.state.mouseDown = false);
+    document.addEventListener('mousedown', () => this.state.mouseDown = true);
 
-  pixelSizeInput.oninput = (e) => {
-    changePixelsSize(e.target.value);
-    pixelSizeValue.innerHTML = e.target.value;
-  }
+    this.elements.pixelContainer.addEventListener('mousedown', (e) => {
+      this.state.mouseDown = true;
+      this.handlePaint(e);
+    });
 
-  brushSizeInput.oninput = (e) => {
-    brushSize = parseInt(e.target.value);
-    brushSizeValue.innerHTML = brushSize;
-  }
-  // toggle pixel border
-  pixelBorderToggle.addEventListener('change', (e) => togglePixelBorders(e.target.checked));
+    this.elements.pixelContainer.addEventListener('mousemove', (e) => this.handlePaint(e));
+    this.elements.pixelContainer.addEventListener('contextmenu', e => e.preventDefault()); // prevent right-click menu
 
-}
+    // color picker
+    this.elements.colorInput.addEventListener('input', (e) => {
+      this.state.selectedColor = e.target.value;
+    })
 
-function handleSlider(e) {
-  if (e.target === columnsInput) {
-    columnsValue.innerHTML = e.target.value;
-  } else if (e.target === rowsInput) {
-    rowsValue.innerHTML = e.target.value;
-  };
-  updatePixelGrid(rowsInput.value, columnsInput.value);
-}
+    // size sliders
+    this.elements.rowsInput.oninput = (e) => this.handleSlider(e);
+    this.elements.columnsInput.oninput = (e) => this.handleSlider(e);
 
-function changePixelsSize(size) {
-  const pixelDivs = Array.from(document.getElementsByClassName('pixel-box'));
-  pixelDivs.forEach(pixel => {
-    pixel.style.width = size + 'px';
-    pixel.style.height = size + 'px';
-  });
-  currPixelSize = size;
-}
+    this.elements.pixelSizeInput.oninput = (e) => {
+      this.changePixelsSize(e.target.value);
+      this.elements.pixelSizeValue.innerHTML = e.target.value;
+    }
 
-function togglePixelBorders(show) {
-  if (!pixelContainer) return;
-  if (show) {
-    pixelContainer.classList.remove('hide-borders')
-  } else {
-    pixelContainer.classList.add('hide-borders');
-  }
-}
+    this.elements.brushSizeInput.oninput = (e) => {
+      this.state.brushSize = parseInt(e.target.value);
+      this.elements.brushSizeValue.innerHTML = this.state.brushSize;
+    }
+    // toggle pixel border
+    this.elements.pixelBorderToggle.addEventListener('change', (e) => this.togglePixelBorders(e.target.checked));
 
-function getPixelFromEvent(e) {
-  let row = Number(e.target.dataset.row);
-  let col = Number(e.target.dataset.col);
-  return [row, col];
-}
+    this.elements.resetButton.addEventListener('click', () => this.resetCanvas())
+  },
 
+  handleSlider(e) {
+    let inputValue = Number(e.target.value);
+    if (e.target === this.elements.columnsInput) {
+      this.elements.columnsValue.innerHTML = inputValue;
+      this.state.columns = inputValue
+    } else if (e.target === this.elements.rowsInput) {
+      this.elements.rowsValue.innerHTML = inputValue;
+      this.state.rows = inputValue;
+    };
+    this.updatePixelGrid();
+  },
 
-function handlePaint(e) {
-  if (!mouseDown) return;
-  if (!e.target.classList.contains("pixel-box")) return;
-  let [row, col] = getPixelFromEvent(e)
-  if (e.buttons === 2) {
+  // always minimum 2 to remove or add if any. Therefore can add or remove from both sides the same amount.
+  updatePixelGrid() {
 
-  }
-  let erase = (e.buttons === 2) ? true : false;
-  paint(row, col, erase);
-}
+    let currRows = document.querySelectorAll('.row').length;
+    let currColumns = this.elements.pixelContainer.firstChild.children.length;
+    // the amounts to add or remove
+    let rowsDifference = this.state.rows - currRows;
+    let columnsDifference = this.state.columns - currColumns;
+    this.updateRows(rowsDifference);
+    this.updateColumns(columnsDifference)
+    // update pixels array to represent the new pixel grid
+    // TODO: pixel array should be source of truth?
+    this.updatePixelsArray();
+  },
 
-function paint(row, col, erase) {
-  let rowsDivs = Array.from(document.getElementsByClassName('row'));
+  updateRows(rowsDifference) {
+    // add 1 row to top and bottom, and fill the colums with the necessary pixels
+    while (rowsDifference > 0) {
+      const row = document.createElement("div");
+      row.className = "row";
 
-  // handle paint brush size
-  let offset = Math.floor((brushSize - 1) / 2);
+      // add pixels to row
+      let pixelBox = this.createPixel();
+      for (let i = 0; i < this.state.columns; i++) {
+        row.append(pixelBox.cloneNode());
+      }
 
-  // loop trough rows, with offset from paintbrush
-  for (let r = row - offset; r < row - offset + brushSize; r++) {
-    if (r >= currRows || r < 0) continue; // out of bounds
-    let columnPixels = Array.from(rowsDivs[r].children);
+      this.elements.pixelContainer.append(row);
+      this.elements.pixelContainer.prepend(row.cloneNode(true)); // deep clone row
+      rowsDifference -= 2;
+    }
 
-    // loop trough columns, with offset from paintbrush
-    for (let c = col - offset; c < col - offset + brushSize; c++) {
-      if (c >= currColumns || c < 0) continue; // out of bounds
+    // remove 1 row top and bottom, until no more to remove
+    while (rowsDifference < 0) {
+      this.elements.pixelContainer.lastChild.remove();
+      this.elements.pixelContainer.firstChild.remove();
+      rowsDifference += 2;
+    }
+  },
 
-      let pixel = columnPixels[c];
-      // color or erase
-      if (erase) {
-        pixel.style.backgroundColor = '';
-      } else {
-        pixel.style.backgroundColor = selectedColor;
+  updateColumns(columnsDifference) {
+    const rowsDivs = Array.from(document.getElementsByClassName('row'));
+    let pixelBox = this.createPixel();
+    // add 1 pixel on each side until no more columns to add
+    while (columnsDifference > 0) {
+      rowsDivs.forEach(row => {
+        row.append(pixelBox.cloneNode());
+        row.prepend(pixelBox.cloneNode());
+      });
+      columnsDifference -= 2;
+    }
+    // remove 1 pixel on each side until no more columns to remove
+    while (columnsDifference < 0) {
+      rowsDivs.forEach(row => {
+        row.lastChild.remove();
+        row.firstChild.remove();
+      });
+      columnsDifference += 2;
+    }
+  },
+
+  // due to shifting of pixel grid, pixels array has to be updated to represent the new pixel grid
+  updatePixelsArray() {
+    const rowsDivs = Array.from(document.getElementsByClassName('row'));
+
+    // create new array and fill it with current pixels
+    let newPixels = [];
+    for (let r = 0; r < rowsDivs.length; r++) {
+      newPixels[r] = [];
+      const columnPixels = Array.from(rowsDivs[r].children);
+      for (let c = 0; c < columnPixels.length; c++) {
+        let pixel = columnPixels[c];
+        // update pixel coordinate data
+        pixel.dataset.row = r;
+        pixel.dataset.col = c;
+        newPixels[r][c] = pixel;
       }
     }
-  }
-}
+    this.state.pixels = newPixels;
+  },
 
-function generatePixelGrid(rows, columns) {
-  // remove previous cells
-  pixelContainer.replaceChildren();
-
-  // create rows
-  for (let r = 0; r < rows; r++) {
-    pixels[r] = []
-    const row = document.createElement("div");
-    row.className = "row";
-    pixelContainer.append(row);
-
-    // add pixels to row
-    let pixelBox = createPixel();
-    for (let c = 0; c < columns; c++) {
-      let pixel = pixelBox.cloneNode();
-      // add coordinate data to each pixels
-      pixel.dataset.row = r;
-      pixel.dataset.col = c;
-      row.append(pixel);
-
-      pixels[r][c] = pixelBox;
-    }
-  }
-  currRows = rows;
-  currColumns = columns;
-}
-
-// TODO: only update pixels with a color? have a list of painted pixels?
-function resetCanvas() {
-  const pixels = Array.from(document.getElementsByClassName('pixel-box'))
-  pixels.forEach(pixel => {
-    pixel.style.backgroundColor = "";
-  });
-}
-
-// always minimum 2 to remove or add if any. Therefore can add or remove from both sides the same amount.
-function updatePixelGrid(newRows, newColumns) {
-  // the amounts to add or remove
-  let rowsDifference = newRows - currRows;
-  let columnsDifference = newColumns - currColumns;
-
-  updateRows(rowsDifference);
-  currRows = newRows;
-  updateColumns(columnsDifference)
-  currColumns = newColumns;
-  // update pixels array to represent the new pixel grid
-  // TODO: pixel array should be source of truth?
-  updatePixelsArray();
-}
-
-function updateRows(rowsDifference) {
-  // add 1 row to top and bottom, and fill the colums with the necessary pixels
-  while (rowsDifference > 0) {
-    const row = document.createElement("div");
-    row.className = "row";
-
-    // add pixels to row
-    let pixelBox = createPixel();
-    for (let i = 0; i < currColumns; i++) {
-      row.append(pixelBox.cloneNode());
-    }
-
-    pixelContainer.append(row);
-    pixelContainer.prepend(row.cloneNode(true)); // deep clone row
-    rowsDifference -= 2;
-  }
-
-  // remove 1 row top and bottom, until no more to remove
-  while (rowsDifference < 0) {
-    pixelContainer.lastChild.remove();
-    pixelContainer.firstChild.remove();
-    rowsDifference += 2;
-  }
-}
-
-function updateColumns(columnsDifference) {
-  const rowsDivs = Array.from(document.getElementsByClassName('row'));
-  let pixelBox = createPixel();
-  // add 1 pixel on each side until no more columns to add
-  while (columnsDifference > 0) {
-    rowsDivs.forEach(row => {
-      row.append(pixelBox.cloneNode());
-      row.prepend(pixelBox.cloneNode());
+  changePixelsSize(size) {
+    const pixelDivs = Array.from(document.getElementsByClassName('pixel-box'));
+    pixelDivs.forEach(pixel => {
+      pixel.style.width = size + 'px';
+      pixel.style.height = size + 'px';
     });
-    columnsDifference -= 2;
-  }
-  // remove 1 pixel on each side until no more columns to remove
-  while (columnsDifference < 0) {
-    rowsDivs.forEach(row => {
-      row.lastChild.remove();
-      row.firstChild.remove();
-    });
-    columnsDifference += 2;
-  }
-}
+    this.state.pixelSize = size;
+  },
 
-// due to shifting of pixel grid, pixels array has to be updated to represent the new pixel grid
-function updatePixelsArray() {
-  const rowsDivs = Array.from(document.getElementsByClassName('row'));
-
-  // create new array and fill it with current pixels
-  let newPixels = [];
-  for (let r = 0; r < rowsDivs.length; r++) {
-    newPixels[r] = [];
-    const columnPixels = Array.from(rowsDivs[r].children);
-    for (let c = 0; c < columnPixels.length; c++) {
-      let pixel = columnPixels[c];
-      // update pixel coordinate data
-      pixel.dataset.row = r;
-      pixel.dataset.col = c;
-      newPixels[r][c] = pixel;
+  togglePixelBorders(show) {
+    if (!this.elements.pixelContainer) return;
+    if (show) {
+      this.elements.pixelContainer.classList.remove('hide-borders')
+    } else {
+      this.elements.pixelContainer.classList.add('hide-borders');
     }
-  }
-  pixels = newPixels;
-}
+  },
 
-// TODO: also add pixel coordinate datasets here?
-function createPixel() {
-  const pixelBox = document.createElement("div");
-  pixelBox.className = "pixel-box";
-  pixelBox.style.width = currPixelSize + 'px';
-  pixelBox.style.height = currPixelSize + 'px';
-  return pixelBox;
-}
+  getPixelFromEvent(e) {
+    let row = Number(e.target.dataset.row);
+    let col = Number(e.target.dataset.col);
+    return [row, col];
+  },
+
+  handlePaint(e) {
+    if (!this.state.mouseDown) return;
+    if (!e.target.classList.contains("pixel-box")) return;
+    let [row, col] = this.getPixelFromEvent(e)
+    let erase = (e.buttons === 2) ? true : false;
+    this.paint(row, col, erase);
+  },
+
+  paint(row, col, erase) {
+    let rowsDivs = Array.from(document.getElementsByClassName('row'));
+
+    // handle paint brush size
+    let offset = Math.floor((this.state.brushSize - 1) / 2);
+
+    // loop trough rows, with offset from paintbrush
+    for (let r = row - offset; r < row - offset + this.state.brushSize; r++) {
+      if (r >= this.state.rows || r < 0) continue; // out of bounds
+      let columnPixels = Array.from(rowsDivs[r].children);
+
+      // loop trough columns, with offset from paintbrush
+      for (let c = col - offset; c < col - offset + this.state.brushSize; c++) {
+        if (c >= this.state.columns || c < 0) continue; // out of bounds
+
+        let pixel = columnPixels[c];
+        // color or erase
+        if (erase) {
+          pixel.style.backgroundColor = '';
+        } else {
+          pixel.style.backgroundColor = this.state.selectedColor;
+        }
+      }
+    }
+  },
+
+  generatePixelGrid() {
+    // remove previous cells
+    this.elements.pixelContainer.replaceChildren();
+
+    // create rows
+    for (let r = 0; r < this.state.rows; r++) {
+      this.state.pixels[r] = []
+      const row = document.createElement("div");
+      row.className = "row";
+      this.elements.pixelContainer.append(row);
+
+      // add pixels to row
+      let pixelBox = this.createPixel();
+      for (let c = 0; c < this.state.columns; c++) {
+        let pixel = pixelBox.cloneNode();
+        // add coordinate data to each pixels
+        pixel.dataset.row = r;
+        pixel.dataset.col = c;
+        row.append(pixel);
+
+        this.state.pixels[r][c] = pixelBox;
+      }
+    }
+  },
+
+  // TODO: only update pixels with a color? have a list of painted pixels?
+  resetCanvas() {
+    const pixels = Array.from(document.getElementsByClassName('pixel-box'))
+    pixels.forEach(pixel => {
+      pixel.style.backgroundColor = "";
+    });
+  },
+
+  // TODO: also add pixel coordinate datasets here?
+  createPixel() {
+    const pixelBox = document.createElement("div");
+    pixelBox.className = "pixel-box";
+    pixelBox.style.width = this.state.pixelSize + 'px';
+    pixelBox.style.height = this.state.pixelSize + 'px';
+    return pixelBox;
+  }
+
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  PixelDrawer.init();
+});
+
+
+
+
+
