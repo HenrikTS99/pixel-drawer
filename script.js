@@ -124,10 +124,14 @@ function handlePaint(e) {
   if (!mouseDown) return;
   if (!e.target.classList.contains("pixel-box")) return;
   let [row, col] = getPixelFromEvent(e)
-  paint(row, col);
+  if (e.buttons === 2) {
+
+  }
+  let erase = (e.buttons === 2) ? true : false;
+  paint(row, col, erase);
 }
 
-function paint(row, col) {
+function paint(row, col, erase) {
   let rowsDivs = Array.from(document.getElementsByClassName('row'));
 
   // handle paint brush size
@@ -144,7 +148,7 @@ function paint(row, col) {
 
       let pixel = columnPixels[c];
       // color or erase
-      if (e.buttons === 2) {
+      if (erase) {
         pixel.style.backgroundColor = '';
       } else {
         pixel.style.backgroundColor = selectedColor;
