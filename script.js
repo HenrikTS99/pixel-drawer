@@ -133,12 +133,14 @@ function paint(row, col) {
   // handle paint brush size
   let offset = Math.floor((brushSize - 1) / 2);
 
+  // loop trough rows, with offset from paintbrush
   for (let r = row - offset; r < row - offset + brushSize; r++) {
-    if (r >= currRows || r < 0) continue;
+    if (r >= currRows || r < 0) continue; // out of bounds
     let columnPixels = Array.from(rowsDivs[r].children);
 
+    // loop trough columns, with offset from paintbrush
     for (let c = col - offset; c < col - offset + brushSize; c++) {
-      if (c >= currColumns || c < 0) continue;
+      if (c >= currColumns || c < 0) continue; // out of bounds
 
       let pixel = columnPixels[c];
       // color or erase
@@ -155,15 +157,18 @@ function generatePixelGrid(rows, columns) {
   // remove previous cells
   pixelContainer.replaceChildren();
 
+  // create rows
   for (let r = 0; r < rows; r++) {
     pixels[r] = []
     const row = document.createElement("div");
     row.className = "row";
     pixelContainer.append(row);
 
+    // add pixels to row
     let pixelBox = createPixel();
     for (let c = 0; c < columns; c++) {
       let pixel = pixelBox.cloneNode();
+      // add coordinate data to each pixels
       pixel.dataset.row = r;
       pixel.dataset.col = c;
       row.append(pixel);
@@ -175,6 +180,7 @@ function generatePixelGrid(rows, columns) {
   currColumns = columns;
 }
 
+// TODO: only update pixels with a color? have a list of painted pixels?
 function resetCanvas() {
   const pixels = Array.from(document.getElementsByClassName('pixel-box'))
   pixels.forEach(pixel => {
@@ -182,6 +188,7 @@ function resetCanvas() {
   });
 }
 
+// always minimum 2 to remove or add if any. Therefore can add or remove from both sides the same amount.
 function updatePixelGrid(newRows, newColumns) {
   // the amounts to add or remove
   let rowsDifference = newRows - currRows;
@@ -192,6 +199,7 @@ function updatePixelGrid(newRows, newColumns) {
   updateColumns(columnsDifference)
   currColumns = newColumns;
   // update pixels array to represent the new pixel grid
+  // TODO: pixel array should be source of truth?
   updatePixelsArray();
 }
 
@@ -200,14 +208,18 @@ function updateRows(rowsDifference) {
   while (rowsDifference > 0) {
     const row = document.createElement("div");
     row.className = "row";
+
+    // add pixels to row
     let pixelBox = createPixel();
     for (let i = 0; i < currColumns; i++) {
       row.append(pixelBox.cloneNode());
     }
+
     pixelContainer.append(row);
     pixelContainer.prepend(row.cloneNode(true)); // deep clone row
     rowsDifference -= 2;
   }
+
   // remove 1 row top and bottom, until no more to remove
   while (rowsDifference < 0) {
     pixelContainer.lastChild.remove();
@@ -240,12 +252,15 @@ function updateColumns(columnsDifference) {
 // due to shifting of pixel grid, pixels array has to be updated to represent the new pixel grid
 function updatePixelsArray() {
   const rowsDivs = Array.from(document.getElementsByClassName('row'));
+
+  // create new array and fill it with current pixels
   let newPixels = [];
   for (let r = 0; r < rowsDivs.length; r++) {
     newPixels[r] = [];
     const columnPixels = Array.from(rowsDivs[r].children);
     for (let c = 0; c < columnPixels.length; c++) {
       let pixel = columnPixels[c];
+      // update pixel coordinate data
       pixel.dataset.row = r;
       pixel.dataset.col = c;
       newPixels[r][c] = pixel;
@@ -254,6 +269,7 @@ function updatePixelsArray() {
   pixels = newPixels;
 }
 
+// TODO: also add pixel coordinate datasets here?
 function createPixel() {
   const pixelBox = document.createElement("div");
   pixelBox.className = "pixel-box";
