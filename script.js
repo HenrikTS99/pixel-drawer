@@ -107,9 +107,9 @@ function changePixelsSize(size) {
 function togglePixelBorders(show) {
   if (!pixelContainer) return;
   if (show) {
-    pixelContainer.classList.add('hide-borders');
-  } else {
     pixelContainer.classList.remove('hide-borders')
+  } else {
+    pixelContainer.classList.add('hide-borders');
   }
 }
 
