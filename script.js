@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   pixelBorderToggle = document.getElementById('pixel-border-toggle');
 
-
   createEventListeners();
   generatePixelGrid(Number(rowsInput.value), Number(columnsInput.value));
 });
@@ -106,10 +105,12 @@ function changePixelsSize(size) {
 }
 
 function togglePixelBorders(show) {
-  const pixelDivs = Array.from(document.getElementsByClassName('pixel-box'));
-  pixelDivs.forEach(pixel => {
-    pixel.style.borderColor = show ? 'rgba(0,0,0,0.1)' : 'transparent';
-  });
+  if (!pixelContainer) return;
+  if (show) {
+    pixelContainer.classList.add('hide-borders');
+  } else {
+    pixelContainer.classList.remove('hide-borders')
+  }
 }
 
 function getPixelFromEvent(e) {
