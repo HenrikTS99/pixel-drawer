@@ -103,6 +103,9 @@ const PixelDrawer = {
   },
 
   handleSlider(e) {
+    let oldRows = this.state.rows;
+    let oldColumns = this.state.columns;
+
     let inputValue = Number(e.target.value);
     if (e.target === this.elements.columnsInput) {
       this.elements.columnsValue.innerHTML = inputValue;
@@ -111,15 +114,20 @@ const PixelDrawer = {
       this.elements.rowsValue.innerHTML = inputValue;
       this.state.rows = inputValue;
     };
-    this.updatePixelGrid();
+    this.updatePixelGrid(oldRows, oldColumns);
   },
 
-  updatePixelGrid() {
-    this.resizeGrid();
-    this.generatePixelGrid();
+  updatePixelGrid(oldRows, oldColumns) {
+    let rowsDiff = this.state.rows - oldRows;
+    let columnsDiff = this.state.columns - oldColumns;
+
+    this.resizePixelArray(rowsDiff, columnsDiff);
+    this.resizeDisplayGrid(rowsDiff, columnsDiff);
   },
 
-  resizeGrid() {
+  resizePixelArray(rowsDiff, columnsDiff) {
+    const rowOffset = rowsDiff / 2;
+    const columnOffset = columnsDiff / 2;
     const newPixelsArray = [];
 
     for (let r = 0; r < this.state.rows; r++) {
@@ -127,11 +135,102 @@ const PixelDrawer = {
       for (let c = 0; c < this.state.columns; c++) {
         // use of optional chaining, evaluates to undefined instead of error if not exists: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
         // Nullish coalescing operator (??): Returns right side when left side is undefined
-        newRow[c] = this.state.pixels?.[r]?.[c] ?? ''
+        // Shift index by the new difference
+        newRow[c] = this.state.pixels?.[r - rowOffset]?.[c - columnOffset] ?? ''
       }
       newPixelsArray.push(newRow);
     }
     this.state.pixels = newPixelsArray
+  },
+
+  resizeDisplayGrid(rowsDiff, columnsDiff) {
+    this.updateRows(rowsDiff);
+    this.updateColumns(columnsDiff);
+    this.updatePixelDatasets();
+  },
+
+  updateRows(rowsDiff) {
+    while (rowsDiff > 0) {
+      let rowIndex = this.state.rows - 1;
+      const row = document.createElement("div");
+      row.className = "row";
+      this.elements.pixelContainer.append(row);
+
+      const firstRow = document.createElement("div");
+      firstRow.className = 'row';
+      this.elements.pixelContainer.prepend(firstRow);
+
+      // add pixels to row
+      for (let c = 0; c < this.state.columns; c++) {
+        // First index is wrong, but will be updated in 'updatePixelDatasets'
+        let lastPixelBox = this.createPixel(rowIndex, c, this.state.pixels[rowIndex][c]);
+        row.append(lastPixelBox);
+        let firstPixelBox = this.createPixel(0, c, this.state.pixels[0][c]);
+        firstRow.append(firstPixelBox);
+      }
+
+      rowsDiff -= 2;
+    }
+    while (rowsDiff < 0) {
+      this.elements.pixelContainer.lastChild.remove();
+      this.elements.pixelContainer.firstChild.remove();
+      rowsDiff += 2;
+    }
+  },
+
+  updateColumns(columnsDiff) {
+    const rowsDivs = Array.from(document.getElementsByClassName('row'));
+    while (columnsDiff > 0) {
+      let columnIndex = this.state.columns - 1;
+      rowsDivs.forEach((row, index) => {
+        // Second index is wrong, but will be updated in 'updatePixelDatasets'
+        let lastPixelBox = this.createPixel(index, columnIndex, this.state.pixels[index][columnIndex]);
+        let firstPixelBox = this.createPixel(index, columnsDiff, this.state.pixels[index][0]);
+        row.append(lastPixelBox);
+        row.prepend(firstPixelBox);
+      });
+      columnsDiff -= 2;
+    }
+    while (columnsDiff < 0) {
+      rowsDivs.forEach(row => {
+        row.lastChild.remove();
+        row.firstChild.remove();
+      });
+      columnsDiff += 2;
+    }
+  },
+
+  updatePixelDatasets() {
+    // update row data 
+    const rowsDivs = document.getElementsByClassName('row');
+    for (let r = 0; r < rowsDivs.length; r++) {
+      const pixels = rowsDivs[r].children;
+      for (let c = 0; c < pixels.length; c++) {
+        const pixel = pixels[c];
+        if (pixel.dataset.row != r) pixel.dataset.row = r;
+        if (pixel.dataset.col != c) pixel.dataset.col = c;
+      }
+    }
+  },
+
+  generatePixelGrid() {
+    // Get current DOM pixel array size
+
+    // remove previous cells
+    this.elements.pixelContainer.replaceChildren();
+
+    // create rows
+    for (let r = 0; r < this.state.rows; r++) {
+      const row = document.createElement("div");
+      row.className = "row";
+      this.elements.pixelContainer.append(row);
+
+      // add pixels to row
+      for (let c = 0; c < this.state.columns; c++) {
+        let pixelBox = this.createPixel(r, c, this.state.pixels[r][c])
+        row.append(pixelBox);
+      }
+    }
   },
 
   changePixelsSize(size) {
@@ -203,24 +302,6 @@ const PixelDrawer = {
     }
   },
 
-  generatePixelGrid() {
-    // remove previous cells
-    this.elements.pixelContainer.replaceChildren();
-
-    // create rows
-    for (let r = 0; r < this.state.rows; r++) {
-      const row = document.createElement("div");
-      row.className = "row";
-      this.elements.pixelContainer.append(row);
-
-      // add pixels to row
-      for (let c = 0; c < this.state.columns; c++) {
-        let pixelBox = this.createPixel(r, c, this.state.pixels[r][c])
-        row.append(pixelBox);
-      }
-    }
-  },
-
   resetPixelsColors() {
     this.state.pixels.forEach(row => {
       row.fill('');
@@ -257,8 +338,3 @@ const PixelDrawer = {
 document.addEventListener('DOMContentLoaded', () => {
   PixelDrawer.init();
 });
-
-
-
-
-
