@@ -8,6 +8,7 @@ const PixelDrawer = {
     pixelSize: 10,
     brushSize: 1,
     pixels: [],
+    bucketFill: false
   },
   elements: {
     pixelContainer: null,
@@ -47,6 +48,7 @@ const PixelDrawer = {
     this.elements.brushSizeValue = document.getElementById('brush-size-value');
 
     this.elements.pixelBorderToggle = document.getElementById('pixel-border-toggle');
+    this.elements.bucketToggle = document.getElementById('bucket-toggle')
     this.elements.resetButton = document.getElementById('reset-button');
 
     // Set initial display values
@@ -99,6 +101,9 @@ const PixelDrawer = {
     // toggle pixel border
     this.elements.pixelBorderToggle.addEventListener('change', (e) => this.togglePixelBorders(e.target.checked));
 
+    // toggle bucket fill
+    this.elements.bucketToggle.addEventListener('change', () => this.state.bucketFill = !this.state.bucketFill)
+    // reset canvas
     this.elements.resetButton.addEventListener('click', () => this.resetCanvas())
   },
 
@@ -261,8 +266,29 @@ const PixelDrawer = {
     if (!this.state.mouseDown) return;
     if (!e.target.classList.contains("pixel-box")) return;
     let [row, col] = this.getPixelFromEvent(e)
+    if (this.state.bucketFill) {
+      let old_color = this.state.pixels[row][col];
+      if (old_color == this.state.selectedColor) return;
+      this.bucketFillAlgo(row, col, old_color);
+      return;
+    }
     let erase = (e.buttons === 2) ? true : false;
     this.paint(row, col, erase);
+  },
+
+  // TODO: change DFS algorithm to BFS algorithm
+  bucketFillAlgo(row, col, oldColor) {
+    if (row < 0 || row >= this.state.rows || col < 0 || col >= this.state.columns || this.state.pixels[row][col] != oldColor) {
+      return;
+    }
+
+    this.state.pixels[row][col] = this.state.selectedColor;
+    this.renderPixel(row, col);
+    this.bucketFillAlgo(row + 1, col, oldColor)
+    this.bucketFillAlgo(row - 1, col, oldColor)
+    this.bucketFillAlgo(row, col + 1, oldColor)
+    this.bucketFillAlgo(row, col - 1, oldColor)
+
   },
 
   paint(row, col, erase) {
