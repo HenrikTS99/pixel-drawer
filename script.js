@@ -267,27 +267,30 @@ const PixelDrawer = {
     if (!e.target.classList.contains("pixel-box")) return;
     let [row, col] = this.getPixelFromEvent(e)
     if (this.state.bucketFill) {
-      let old_color = this.state.pixels[row][col];
-      if (old_color == this.state.selectedColor) return;
-      this.bucketFillAlgo(row, col, old_color);
+      this.floodFillBFS(row, col);
+      this.redrawCanvas();
       return;
     }
     let erase = (e.buttons === 2) ? true : false;
     this.paint(row, col, erase);
   },
 
-  // TODO: change DFS algorithm to BFS algorithm
-  bucketFillAlgo(row, col, oldColor) {
-    if (row < 0 || row >= this.state.rows || col < 0 || col >= this.state.columns || this.state.pixels[row][col] != oldColor) {
-      return;
+  floodFillBFS(row, col) {
+    let oldColor = this.state.pixels[row][col];
+    if (oldColor === this.state.selectedColor) return;
+    let queue = [];
+    queue.push([row, col]);
+    while (queue.length > 0) {
+      let [row, col] = queue.shift();
+      if (row < 0 || row >= this.state.rows || col < 0 || col >= this.state.columns || this.state.pixels[row][col] != oldColor) {
+        continue;
+      }
+      this.state.pixels[row][col] = this.state.selectedColor;
+      queue.push([row + 1, col]);
+      queue.push([row - 1, col]);
+      queue.push([row, col + 1]);
+      queue.push([row, col - 1]);
     }
-
-    this.state.pixels[row][col] = this.state.selectedColor;
-    this.renderPixel(row, col);
-    this.bucketFillAlgo(row + 1, col, oldColor)
-    this.bucketFillAlgo(row - 1, col, oldColor)
-    this.bucketFillAlgo(row, col + 1, oldColor)
-    this.bucketFillAlgo(row, col - 1, oldColor)
 
   },
 
