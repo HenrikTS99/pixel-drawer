@@ -3,6 +3,7 @@ const PixelDrawer = {
   state: {
     selectedColor: 'ff0000',
     mouseDown: false,
+    lastPaintPos: null,
     rows: 16,
     columns: 16,
     pixelSize: 10,
@@ -69,7 +70,10 @@ const PixelDrawer = {
   },
 
   createEventListeners() {
-    document.addEventListener('mouseup', () => this.state.mouseDown = false);
+    document.addEventListener('mouseup', () => {
+      this.state.mouseDown = false
+      this.state.lastPaintPos = null;
+    });
     document.addEventListener('mousedown', () => this.state.mouseDown = true);
 
     this.elements.pixelContainer.addEventListener('mousedown', (e) => {
@@ -219,8 +223,6 @@ const PixelDrawer = {
   },
 
   generatePixelGrid() {
-    // Get current DOM pixel array size
-
     // remove previous cells
     this.elements.pixelContainer.replaceChildren();
 
@@ -273,6 +275,7 @@ const PixelDrawer = {
     }
     let erase = (e.buttons === 2) ? true : false;
     this.paint(row, col, erase);
+    this.state.lastPaintPos = [row, col];
   },
 
   floodFillBFS(row, col) {
@@ -295,6 +298,10 @@ const PixelDrawer = {
   },
 
   paint(row, col, erase) {
+    if (this.state.lastPaintPos) {
+      this.drawLine(this.state.lastPaintPos, [row, col]);
+      return;
+    }
     // handle paint brush size
     let offset = Math.floor((this.state.brushSize - 1) / 2);
 
@@ -312,6 +319,24 @@ const PixelDrawer = {
           this.state.pixels[r][c] = this.state.selectedColor;
         }
         this.renderPixel(r, c)
+      }
+    }
+  },
+
+  drawLine(lastPos, currPos) {
+    let [x0, y0] = lastPos;
+    let [x1, y1] = currPos;
+    deltaX = x1 - x0;
+    deltaY = y1 - y0;
+    let step = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+    if (step != 0) {
+      let stepX = deltaX / step;
+      let stepY = deltaY / step;
+      for (let i = 0; i < step + 1; i++) {
+        let row = Math.round(x0 + i * stepX);
+        let col = Math.round(y0 + i * stepY);
+        this.state.pixels[row][col] = this.state.selectedColor;
+        this.renderPixel(row, col);
       }
     }
   },
