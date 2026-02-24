@@ -304,19 +304,67 @@ const PixelDrawer = {
   drawLine(lastPos, currPos, erase, offset) {
     let [x0, y0] = lastPos;
     let [x1, y1] = currPos;
+    if (Math.abs(x1 - x0) > Math.abs(y1 - y0)) {
+      this.drawLineH(x0, y0, x1, y1, erase, offset);
+    } else {
+      this.drawLineV(x0, y0, x1, y1, erase, offset);
+    }
+  },
+
+
+  drawLineH(x0, y0, x1, y1, erase, offset) {
+    if (x0 > x1) {
+      [x0, x1] = [x1, x0];
+      [y0, y1] = [y1, y0];
+    }
     let deltaX = x1 - x0;
     let deltaY = y1 - y0;
-    let step = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-    if (step === 0) {
-      this._applyBrushStroke(x0, y0, erase, offset);
-    } else {
-      let stepX = deltaX / step;
-      let stepY = deltaY / step;
-      for (let i = 0; i < step + 1; i++) {
-        let row = Math.round(x0 + i * stepX);
-        let col = Math.round(y0 + i * stepY);
-        this._applyBrushStroke(row, col, erase, offset)
+
+    let dir = (deltaY < 0) ? -1 : 1;
+    deltaY *= dir;
+
+    if (deltaX != 0) {
+      y = y0;
+      p = 2 * deltaY - deltaX;
+      for (let i = 0; i <= deltaX; i++) {
+        this._applyBrushStroke(x0 + i, y, erase, offset);
+
+        if (p >= 0) {
+          y += dir;
+          p = p - 2 * deltaX;
+        }
+        p = p + 2 * deltaY;
       }
+    } else {
+      this._applyBrushStroke(x0, y0, erase, offset);
+    }
+  },
+
+  drawLineV(x0, y0, x1, y1, erase, offset) {
+    if (y0 > y1) {
+      [x0, x1] = [x1, x0];
+      [y0, y1] = [y1, y0];
+    }
+    let deltaX = x1 - x0;
+    let deltaY = y1 - y0;
+
+    let dir = (deltaX < 0) ? -1 : 1;
+    deltaX *= dir;
+
+    if (deltaY != 0) {
+      x = x0;
+      p = 2 * deltaX - deltaY;
+      for (let i = 0; i <= deltaY; i++) {
+        this._applyBrushStroke(x, y0 + i, erase, offset);
+
+        if (p >= 0) {
+          x += dir;
+          p = p - 2 * deltaY;
+        }
+        p = p + 2 * deltaX;
+      }
+    } else {
+      this._applyBrushStroke(x0, y0, erase, offset);
     }
   },
 
