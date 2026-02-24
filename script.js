@@ -274,7 +274,11 @@ const PixelDrawer = {
       return;
     }
     let erase = (e.buttons === 2) ? true : false;
-    this.paint(row, col, erase);
+    let offset = Math.floor((this.state.brushSize - 1) / 2);
+    if (!this.state.lastPaintPos) {
+      this.state.lastPaintPos = [row, col];
+    }
+    this.drawLine(this.state.lastPaintPos, [row, col], erase, offset);
     this.state.lastPaintPos = [row, col];
   },
 
@@ -297,46 +301,38 @@ const PixelDrawer = {
 
   },
 
-  paint(row, col, erase) {
-    if (this.state.lastPaintPos) {
-      this.drawLine(this.state.lastPaintPos, [row, col]);
-      return;
+  drawLine(lastPos, currPos, erase, offset) {
+    let [x0, y0] = lastPos;
+    let [x1, y1] = currPos;
+    let deltaX = x1 - x0;
+    let deltaY = y1 - y0;
+    let step = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+    if (step === 0) {
+      this._applyBrushStroke(x0, y0, erase, offset);
+    } else {
+      let stepX = deltaX / step;
+      let stepY = deltaY / step;
+      for (let i = 0; i < step + 1; i++) {
+        let row = Math.round(x0 + i * stepX);
+        let col = Math.round(y0 + i * stepY);
+        this._applyBrushStroke(row, col, erase, offset)
+      }
     }
-    // handle paint brush size
-    let offset = Math.floor((this.state.brushSize - 1) / 2);
+  },
 
-    // loop trough rows, with offset from paintbrush
+  _applyBrushStroke(row, col, erase, offset) {
     for (let r = row - offset; r < row - offset + this.state.brushSize; r++) {
       if (r >= this.state.rows || r < 0) continue; // out of bounds
 
       // loop trough columns, with offset from paintbrush
       for (let c = col - offset; c < col - offset + this.state.brushSize; c++) {
         if (c >= this.state.columns || c < 0) continue; // out of bounds
-
         if (erase) {
           this.state.pixels[r][c] = '';
         } else {
           this.state.pixels[r][c] = this.state.selectedColor;
         }
-        this.renderPixel(r, c)
-      }
-    }
-  },
-
-  drawLine(lastPos, currPos) {
-    let [x0, y0] = lastPos;
-    let [x1, y1] = currPos;
-    deltaX = x1 - x0;
-    deltaY = y1 - y0;
-    let step = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-    if (step != 0) {
-      let stepX = deltaX / step;
-      let stepY = deltaY / step;
-      for (let i = 0; i < step + 1; i++) {
-        let row = Math.round(x0 + i * stepX);
-        let col = Math.round(y0 + i * stepY);
-        this.state.pixels[row][col] = this.state.selectedColor;
-        this.renderPixel(row, col);
+        this.renderPixel(r, c);
       }
     }
   },
